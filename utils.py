@@ -17,6 +17,12 @@ def windowed_events(events, window_times, window_size):
     for window_time in reversed(window_times):
         # e.g. events (a numpy array) [1, 3, 5, 7], window_time is 5 
         # events [events < window_time] = [1, 3] (?)
+
+        # [1,3,3,5,7] < 5 -> [1,3,3] maybe
+ 
+        # A single window_time is the difference between no event and an event. 
+        # If there is no event at 0 ms, and then a spike at 30 ms,  the
+        # window_time is 30 ms. 
         events = events[events < window_time]
         yield window_time, events[events > window_time - window_size]
 

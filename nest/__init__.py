@@ -5,17 +5,11 @@ import pylab
 from lsm.nest.utils import get_spike_times
 from lsm.utils import windowed_events
 
-# - Awildo
-# I read through the program, and wrote any questions I had. When I try to explain
-# some things, I write (?) if I'm not 100% on the definitions. For terms I don't know,
-# I'll just write the term and then a question mark after.
-
 # iaf = Integrate and fire
 # psc = Postsynaptic currents - The current in a neuron after it passes through a synapse
 # A synapse is the space between two neurons which impulses pass by diffusion of
 # a neurotransmitter
 # exp = exponential
-# Integrate and fire neuron model with exponential PSCs
 
 # n_E = Number of excitatory neurons
 # n_I = Number of inhibitory neurons
@@ -23,7 +17,7 @@ from lsm.utils import windowed_events
 # A refractory period is the time it takes for a neuron
 # to rest after responding to a stimulus.
 
-
+# Integrate and fire neuron model with exponential PSCs
 def create_iaf_psc_exp(n_E, n_I):
     # Creates integrated-and-fire post-synaptic exponential current
     # Creates a neuron model (already implemented?) to simulate.
@@ -55,7 +49,8 @@ def create_iaf_psc_exp(n_E, n_I):
     return nodes[:n_E], nodes[n_E:]
 
 # Tsodyks is the name of a theoretical neuroscientist
-# nodes_E is the list of
+# nodes_E is the list of excitatory neurons
+# nodes_I is the list of excitatory neurons 
 
 
 def connect_tsodyks(nodes_E, nodes_I):
@@ -225,6 +220,9 @@ class LSM(object):
         return LSM._get_liquid_states(spike_times, times, tau)
 
     @staticmethod
+    # states   -> X
+    # targets  -> b
+    # reg_fact -> regularization fact, lambda from paper
     def compute_readout_weights(states, targets, reg_fact=0):
         """
         Train readout with linear regression
@@ -234,6 +232,7 @@ class LSM(object):
         :return: numpy array with weights[j]
         """
         if reg_fact == 0:
+            # lstsq solves the equation Xw = b for the least square w 
             w = np.linalg.lstsq(states, targets)[0]
         else:
             w = np.dot(np.dot(pylab.inv(reg_fact * pylab.eye(np.size(states, 1)) + np.dot(states.T, states)),
@@ -243,6 +242,7 @@ class LSM(object):
 
     @staticmethod
     def compute_prediction(states, readout_weights):
+        # Computes b_i (prediction) by multiplying X * w_i
         return np.dot(states, readout_weights)
 
     @staticmethod
@@ -256,7 +256,7 @@ class LSM(object):
         # Gets the number of times at which samples are taken?
         n_times = np.size(times, 0)
 
-        # Creates a (n_times) x (n_neurons) matrix == the X matrix
+        # Creates a (n_times) x (n_neurons) matrix -> the X matrix
         states = np.zeros((n_times, n_neurons))
         
         if t_window is None:
@@ -266,6 +266,9 @@ class LSM(object):
         for n, spt in enumerate(spike_times):
             # To do state order is reversed, as windowed_events are provided in reversed order
             for i, (t, window_spikes) in enumerate(windowed_events(np.array(spt), times, t_window)):
-                states[n_times - i - 1, # n_times - i - 1 means 
+                # This index means we're going backwards 
+                # n_times is the row size of X
+                # - i -> it's going backwards
+                states[n_times - i - 1, 
                        n] = sum(np.exp(-(t - window_spikes) / tau)) # the f function 
         return states
