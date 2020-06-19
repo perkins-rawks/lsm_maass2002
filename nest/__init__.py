@@ -232,9 +232,16 @@ class LSM(object):
         :return: numpy array with weights[j]
         """
         if reg_fact == 0:
-            # lstsq solves the equation Xw = b for the least square w 
+            # lstsq solves the equation Xw = b for the best w 
             w = np.linalg.lstsq(states, targets)[0]
         else:
+            # pylab.inv -> inverse 
+            # pylab.eye -> identity matrix
+            # Note that the inverse of kI_n = 1/k I_n for a scalar k. 
+            
+            # This is somewhat related to the least squares equation.
+            # A^TA x = A^T b 
+            # for vectors x and b 
             w = np.dot(np.dot(pylab.inv(reg_fact * pylab.eye(np.size(states, 1)) + np.dot(states.T, states)),
                               states.T),
                        targets)
